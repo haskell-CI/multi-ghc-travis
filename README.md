@@ -2,7 +2,7 @@ Multiple [GHC](http://haskell.org/ghc) Versions for [Travis-CI](https://travis-c
 ============================================================
 
 The purpose of this document is to describe how to set up the [`.travis.yml` script](http://about.travis-ci.org/docs/user/build-configuration/) in order to build and test your [cabalized](http://www.haskell.org/cabal) Haskell package with multiple [GHC](http://haskell.org/ghc) configurations.
-At time of writing [Travis-CI](https://travis-ci.org/) has [support for building Haskell packages](http://about.travis-ci.org/docs/user/languages/haskell/) but only for a single GHC configuration (i.e. *Haskell Platform 2012.2.0.0 with GHC 7.4.1*). By following this guide, you can set up [Travis-CI](https://travis-ci.org/) jobs which have access to the following GHC versions (all compiled for *Ubuntu Linux 12.04 LTS 64-bit*):
+[Travis-CI](https://travis-ci.org/) only has basic [support for building Haskell packages](http://about.travis-ci.org/docs/user/languages/haskell/) with multiple versions of GHC. By following this guide, you can set up [Travis-CI](https://travis-ci.org/) jobs which have access to the following GHC versions (all compiled for *Ubuntu Linux 12.04 LTS 64-bit*):
 
  - GHC 6.12.3,
  - GHC 7.0.1, GHC 7.0.2, GHC 7.0.3, GHC 7.0.4,
