@@ -43,6 +43,7 @@ data GitHubJob = GitHubJob
 data GitHubMatrixEntry = GitHubMatrixEntry
     { ghmeGhcVersion   :: Version
     , ghmeAllowFailure :: Bool
+    , ghmeMatrixExtra  :: [(String, String)]
     }
   deriving (Show)
 
@@ -123,10 +124,10 @@ instance ToYaml GitHubJob where
         item $ "steps" ~> ylistFilt [] (map toYaml $ filter notEmptyStep ghjSteps)
 
 instance ToYaml GitHubMatrixEntry where
-    toYaml GitHubMatrixEntry {..} = ykeyValuesFilt []
+    toYaml GitHubMatrixEntry {..} = ykeyValuesFilt [] $
         [ "ghc" ~> fromString (prettyShow ghmeGhcVersion)
         , "allow-failure" ~> toYaml ghmeAllowFailure
-        ]
+        ] ++ fmap (\(k, v) -> k ~> fromString v) ghmeMatrixExtra
 
 instance ToYaml GitHubStep where
     toYaml GitHubStep {..} = ykeyValuesFilt [] $
