@@ -48,6 +48,7 @@ extra-source-files:
   fixtures/servant-foreign/servant-foreign.cabal
   fixtures/servant-server/servant-server.cabal
   fixtures/splitmix/splitmix.cabal
+  fixtures/notmuch/notmuch.cabal
 
 source-repository head
   type:     git
