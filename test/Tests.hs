@@ -29,6 +29,7 @@ main = do
         , fixtureGoldenTest "messy"
         , fixtureGoldenTest "psql"
         , fixtureGoldenTest "travis-patch"
+        , fixtureGoldenTest "matrix-extra"
         , testGroup "copy-fields"
             [ fixtureGoldenTest "copy-fields-all"
             , fixtureGoldenTest "copy-fields-some"

@@ -76,6 +76,7 @@ data Config = Config
     , cfgPostgres            :: !Bool
     , cfgGoogleChrome        :: !Bool
     , cfgEnv                 :: M.Map Version String
+    , cfgMatrixExtra         :: M.Map String (S.Set String)
     , cfgAllowFailures       :: !VersionRange
     , cfgLastInSeries        :: !Bool
     , cfgOsx                 :: S.Set Version
@@ -134,6 +135,7 @@ emptyConfig = Config
     , cfgPostgres        = False
     , cfgGoogleChrome    = False
     , cfgEnv             = M.empty
+    , cfgMatrixExtra     = M.empty
     , cfgAllowFailures   = noVersion
     , cfgLastInSeries    = False
     , cfgOsx             = S.empty
@@ -159,7 +161,7 @@ configGrammar
        , c (Identity Ubuntu)
        , c (Identity Jobs)
        , c (Identity CopyFields)
-       , c Env, c Folds, c CopyFields, c HeadVersion
+       , c Env, c MatrixExtra, c Folds, c CopyFields, c HeadVersion
        , c (C.List C.FSep (Identity Installed) Installed)
        , Applicative (g DoctestConfig)
        , Applicative (g DocspecConfig)
@@ -228,6 +230,8 @@ configGrammar = Config
         ^^^ help "Add google-chrome service"
     <*> C.monoidalFieldAla    "env"                       Env                                 (field @"cfgEnv")
         ^^^ metahelp "ENV" "Environment variables per job (e.g. `8.0.2:HADDOCK=false`)"
+    <*> C.monoidalFieldAla    "matrix-extra"              MatrixExtra                         (field @"cfgMatrixExtra")
+        ^^^ metahelp "MATRIX" "Extra matrix dimensions (e.g. `libfoo:2.6,3.0,git`)"
     <*> C.optionalFieldDefAla "allow-failures"            Range                               (field @"cfgAllowFailures") noVersion
         ^^^ metahelp "JOB" "Allow failures of particular GHC version"
     <*> C.booleanFieldDef     "last-in-series"                                                (field @"cfgLastInSeries") False
@@ -301,6 +305,28 @@ instance C.Parsec Env where
 instance C.Pretty Env where
     pretty (Env m) = PP.fsep . PP.punctuate PP.comma . map p . M.toList $ m where
         p (v, s) = C.pretty v PP.<> PP.colon PP.<> PP.text s
+
+
+-------------------------------------------------------------------------------
+-- MatrixExtra
+-------------------------------------------------------------------------------
+
+newtype MatrixExtra = MatrixExtra (M.Map String (S.Set String))
+  deriving anyclass (C.Newtype (M.Map String (S.Set String)))
+
+instance C.Parsec MatrixExtra where
+  parsec = MatrixExtra . M.fromList . toList <$> C.sepByNonEmpty p (C.char ';')
+    where
+    p = do
+      k <- C.munch1 (/= ':')
+      _ <- C.char ':'
+      v <- foldMap S.singleton <$> C.sepByNonEmpty (C.munch1 (`notElem` [',', ';'])) (C.char ',')
+      pure (k, v)
+
+instance C.Pretty MatrixExtra where
+  pretty (MatrixExtra m) = PP.fsep . PP.punctuate PP.semi . map p . M.toList $ m where
+    p (k, v) = PP.text k PP.<> PP.colon PP.<> PP.fsep (PP.punctuate PP.comma (map PP.text (toList v)))
+
 
 -------------------------------------------------------------------------------
 -- From Cabal

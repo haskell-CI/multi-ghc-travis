@@ -462,15 +462,7 @@ makeGitHub _argv config@Config {..} gitconfig prj jobs@JobVersions {..} = do
                 , ghjContinueOnError = Just "${{ matrix.allow-failure }}"
                 , ghjServices        = mconcat
                     [ Map.singleton "postgres" postgresService | cfgPostgres ]
-                , ghjMatrix          =
-                    [ GitHubMatrixEntry
-                        { ghmeGhcVersion = v
-                        , ghmeAllowFailure =
-                               previewGHC cfgHeadHackage compiler
-                            || maybeGHC False (`C.withinRange` cfgAllowFailures) compiler
-                        }
-                    | compiler@(GHC v) <- reverse $ toList versions
-                    ]
+                , ghjMatrix          = matrix
                 })
             unless (null cfgIrcChannels) $
                 ircJob actionName mainJobName projectName config gitconfig
@@ -486,6 +478,30 @@ makeGitHub _argv config@Config {..} gitconfig prj jobs@JobVersions {..} = do
     -- GHC versions which need head.hackage
     headGhcVers :: Set CompilerVersion
     headGhcVers = S.filter (previewGHC cfgHeadHackage) versions
+
+    -- extra matrix fields
+    matrixExtra :: [[(String, String)]]
+    matrixExtra =
+      sequence
+      $ (\(k, vs) -> fmap (\v -> (k, v)) (toList vs))
+      <$> Map.toList cfgMatrixExtra
+
+    mkMatrixEntries :: [(String, String)] -> [GitHubMatrixEntry]
+    mkMatrixEntries extra =
+      [ GitHubMatrixEntry
+          { ghmeGhcVersion = v
+          , ghmeAllowFailure =
+                 previewGHC cfgHeadHackage compiler
+              || maybeGHC False (`C.withinRange` cfgAllowFailures) compiler
+          , ghmeMatrixExtra = extra
+          }
+      | compiler@(GHC v) <- reverse $ toList versions
+      ]
+
+    matrix :: [GitHubMatrixEntry]
+    matrix = case matrixExtra of
+      [] -> mkMatrixEntries []
+      xs -> xs >>= mkMatrixEntries
 
     -- step primitives
     githubRun' :: String -> Map.Map String String ->  ShM () -> ListBuilder (Either ShError GitHubStep) ()
